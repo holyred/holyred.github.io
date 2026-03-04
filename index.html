@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кинотеатр «Победа» — Репертуар</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body {
+            background: #0a0a0f;
+            min-height: 100vh;
+        }
+        .grain {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: 0;
+        }
+        .hero-gradient {
+            background: radial-gradient(ellipse at 50% 0%, rgba(220, 38, 38, 0.15) 0%, transparent 60%);
+        }
+        .card-glass {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .card-glass:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(220, 38, 38, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(220, 38, 38, 0.1);
+        }
+        .date-tab {
+            transition: all 0.2s ease;
+        }
+        .date-tab.active {
+            background: rgba(220, 38, 38, 0.8);
+            color: white;
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.3);
+        }
+        .date-tab:not(.active):hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .shimmer {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+            opacity: 0;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        .poster-placeholder {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+        .badge {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            color: #fca5a5;
+        }
+        .time-badge {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.2s;
+        }
+        .time-badge:hover {
+            background: rgba(220, 38, 38, 0.3);
+            border-color: rgba(220, 38, 38, 0.5);
+        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .pulse-dot {
+            width: 8px; height: 8px; background: #dc2626; border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(220,38,38,0.7); }
+            50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(220,38,38,0); }
+        }
+        .genre-tag {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            color: #c4b5fd;
+        }
+    </style>
+</head>
+<body class="text-white">
+    <div class="grain"></div>
+    <div class="hero-gradient fixed top-0 left-0 w-full h-screen pointer-events-none z-0"></div>
+
+    <div class="relative z-10">
+        <!-- Header -->
+        <header class="border-b border-white/5">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center font-black text-lg">П</div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-tight">Кинотеатр «Победа»</h1>
+                        <p class="text-xs text-gray-500">Новосибирск · Репертуар</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="pulse-dot"></div>
+                    <span class="text-xs text-gray-400" id="updateTime">Загрузка...</span>
+                    <button onclick="fetchRepertoire()" class="ml-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300 hover:bg-white/10 transition cursor-pointer flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" id="refreshIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Обновить
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Date Tabs -->
+        <div class="border-b border-white/5 sticky top-0 bg-[#0a0a0f]/80 backdrop-blur-xl z-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                <div class="flex gap-2 py-3 overflow-x-auto scrollbar-hide" id="dateTabs">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+            <!-- Stats -->
+            <div class="flex items-center gap-4 mb-6 text-sm text-gray-400">
+                <span id="movieCount" class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>
+                    <span>—</span>
+                </span>
+                <a href="https://vpobede.ru" target="_blank" class="ml-auto text-xs text-red-400/60 hover:text-red-400 transition flex items-center gap-1">
+                    vpobede.ru
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                </a>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="card-glass rounded-2xl p-5 shimmer h-48"></div>
+                <div class="card-glass rounded-2xl p-5 shimmer h-48"></div>
+                <div class="card-glass rounded-2xl p-5 shimmer h-48"></div>
+                <div class="card-glass rounded-2xl p-5 shimmer h-48"></div>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="hidden">
+                <div class="card-glass rounded-2xl p-8 text-center max-w-lg mx-auto">
+                    <div class="text-4xl mb-4">😔</div>
+                    <h3 class="text-lg font-semibold mb-2">Не удалось загрузить репертуар</h3>
+                    <p class="text-sm text-gray-400 mb-4" id="errorMsg">CORS-прокси недоступен или сайт не отвечает</p>
+                    <button onclick="fetchRepertoire()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm transition cursor-pointer">Попробовать снова</button>
+                    <div class="mt-6 pt-6 border-t border-white/5">
+                        <p class="text-xs text-gray-500 mb-3">Или откройте репертуар напрямую:</p>
+                        <a href="https://vpobede.ru/afisha" target="_blank" class="text-red-400 hover:text-red-300 text-sm underline">vpobede.ru/afisha →</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Movies Grid -->
+            <div id="moviesGrid" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Generated by JS -->
+            </div>
+
+            <!-- No movies for date -->
+            <div id="noMovies" class="hidden">
+                <div class="card-glass rounded-2xl p-8 text-center max-w-lg mx-auto">
+                    <div class="text-4xl mb-4">🎬</div>
+                    <h3 class="text-lg font-semibold mb-2">Нет сеансов на эту дату</h3>
+                    <p class="text-sm text-gray-400">Попробуйте выбрать другой день</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-white/5 mt-12 py-6 text-center text-xs text-gray-600">
+            <p>Данные с <a href="https://vpobede.ru" class="text-red-400/50 hover:text-red-400 transition">vpobede.ru</a> · Неофициальная страница</p>
+        </footer>
+    </div>
+
+    <script>
+        // ---- State ----
+        let allMovies = [];
+        let selectedDate = null;
+        const dates = [];
+
+        // Generate next 7 days
+        const dayNames = ['вс','пн','вт','ср','чт','пт','сб'];
+        const monthNames = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+
+        for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() + i);
+            dates.push({
+                date: d,
+                key: d.toISOString().slice(0,10),
+                dayName: dayNames[d.getDay()],
+                dayNum: d.getDate(),
+                monthName: monthNames[d.getMonth()],
+                label: i === 0 ? 'Сегодня' : i === 1 ? 'Завтра' : null
+            });
+        }
+
+        // ---- Render Date Tabs ----
+        function renderDateTabs() {
+            const container = document.getElementById('dateTabs');
+            container.innerHTML = '';
+
+            // "All" tab
+            const allTab = document.createElement('button');
+            allTab.className = `date-tab px-4 py-2 rounded-xl text-sm font-medium cursor-pointer whitespace-nowrap ${selectedDate === null ? 'active' : 'text-gray-400'}`;
+            allTab.textContent = 'Все дни';
+            allTab.onclick = () => { selectedDate = null; renderDateTabs(); renderMovies(); };
+            container.appendChild(allTab);
+
+            dates.forEach(d => {
+                const tab = document.createElement('button');
+                const isActive = selectedDate === d.key;
+                tab.className = `date-tab px-4 py-2 rounded-xl text-sm font-medium cursor-pointer whitespace-nowrap ${isActive ? 'active' : 'text-gray-400'}`;
+                tab.innerHTML = d.label
+                    ? `${d.label} <span class="text-xs opacity-60">${d.dayNum} ${d.monthName}</span>`
+                    : `${d.dayName} <span class="text-xs opacity-60">${d.dayNum} ${d.monthName}</span>`;
+                tab.onclick = () => { selectedDate = d.key; renderDateTabs(); renderMovies(); };
+                container.appendChild(tab);
+            });
+        }
+
+        // ---- Render Movies ----
+        function renderMovies() {
+            const grid = document.getElementById('moviesGrid');
+            const noMovies = document.getElementById('noMovies');
+
+            let movies = allMovies;
+            if (selectedDate) {
+                movies = movies.filter(m => m.dates && m.dates.includes(selectedDate));
+            }
+
+            document.getElementById('movieCount').querySelector('span').textContent =
+                `${movies.length} ${pluralize(movies.length, 'фильм', 'фильма', 'фильмов')}`;
+
+            if (movies.length === 0) {
+                grid.classList.add('hidden');
+                noMovies.classList.remove('hidden');
+                return;
+            }
+            noMovies.classList.add('hidden');
+            grid.classList.remove('hidden');
+
+            grid.innerHTML = movies.map((movie, i) => `
+                <div class="card-glass rounded-2xl overflow-hidden fade-in" style="animation-delay: ${i * 0.05}s">
+                    <div class="flex gap-4 p-4">
+                        ${movie.poster
+                            ? `<img src="${movie.poster}" alt="${movie.title}" class="w-28 h-40 object-cover rounded-xl flex-shrink-0" onerror="this.outerHTML='<div class=\\'w-28 h-40 poster-placeholder rounded-xl flex-shrink-0 flex items-center justify-center text-3xl\\'>🎬</div>'">`
+                            : `<div class="w-28 h-40 poster-placeholder rounded-xl flex-shrink-0 flex items-center justify-center text-3xl">🎬</div>`
+                        }
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-base leading-tight mb-1.5 text-white/90">${movie.title}</h3>
+                            ${movie.originalTitle ? `<p class="text-xs text-gray-500 mb-2">${movie.originalTitle}</p>` : ''}
+                            <div class="flex flex-wrap gap-1.5 mb-2">
+                                ${movie.genre ? movie.genre.split(',').map(g => `<span class="genre-tag">${g.trim()}</span>`).join('') : ''}
+                                ${movie.age ? `<span class="badge text-xs px-2 py-0.5 rounded-full">${movie.age}</span>` : ''}
+                                ${movie.duration ? `<span class="text-xs text-gray-500 flex items-center gap-1">⏱ ${movie.duration}</span>` : ''}
+                            </div>
+                            <p class="text-xs text-gray-400 leading-relaxed line-clamp-3 mb-3">${movie.description || 'Описание недоступно'}</p>
+                            ${movie.sessions && movie.sessions.length > 0 ? `
+                                <div class="flex flex-wrap gap-1.5">
+                                    ${movie.sessions.slice(0, 8).map(s => `<span class="time-badge text-xs px-2 py-1 rounded-lg">${s}</span>`).join('')}
+                                    ${movie.sessions.length > 8 ? `<span class="text-xs text-gray-500 self-center">+${movie.sessions.length - 8}</span>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ${movie.link ? `
+                        <a href="${movie.link}" target="_blank" class="block border-t border-white/5 px-4 py-2.5 text-xs text-gray-500 hover:text-red-400 hover:bg-white/[0.02] transition text-center">
+                            Подробнее и билеты →
+                        </a>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function pluralize(n, one, few, many) {
+            const mod10 = n % 10, mod100 = n % 100;
+            if (mod10 === 1 && mod100 !== 11) return one;
+            if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+            return many;
+        }
+
+        // ---- Fetch & Parse ----
+        const CORS_PROXIES = [
+            url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+            url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        ];
+
+        async function fetchWithProxy(url) {
+            for (const proxy of CORS_PROXIES) {
+                try {
+                    const proxyUrl = proxy(url);
+                    const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) });
+                    if (resp.ok) {
+                        return await resp.text();
+                    }
+                } catch(e) {
+                    console.warn('Proxy failed:', e.message);
+                }
+            }
+            throw new Error('All proxies failed');
+        }
+
+        async function fetchRepertoire() {
+            const loading = document.getElementById('loadingState');
+            const errorState = document.getElementById('errorState');
+            const grid = document.getElementById('moviesGrid');
+            const noMovies = document.getElementById('noMovies');
+            const refreshIcon = document.getElementById('refreshIcon');
+
+            loading.classList.remove('hidden');
+            errorState.classList.add('hidden');
+            grid.classList.add('hidden');
+            noMovies.classList.add('hidden');
+            refreshIcon.style.animation = 'spin 1s linear infinite';
+
+            try {
+                // Try fetching the main afisha page
+                const html = await fetchWithProxy('https://vpobede.ru/afisha');
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                allMovies = parseMovies(doc);
+
+                // If we got movies from the list, try to enrich with details
+                if (allMovies.length > 0) {
+                    // Try to fetch descriptions for first several movies in parallel
+                    const detailPromises = allMovies.slice(0, 20).map(async (movie, idx) => {
+                        if (movie.link) {
+                            try {
+                                const detailHtml = await fetchWithProxy(movie.link);
+                                const detailDoc = parser.parseFromString(detailHtml, 'text/html');
+                                enrichMovie(movie, detailDoc);
+                            } catch(e) {
+                                console.warn('Failed to fetch details for', movie.title);
+                            }
+                        }
+                    });
+                    await Promise.allSettled(detailPromises);
+                }
+
+                loading.classList.add('hidden');
+
+                if (allMovies.length === 0) {
+                    // Maybe the structure is different, try alternative parse
+                    allMovies = parseMoviesAlternative(doc);
+                }
+
+                if (allMovies.length === 0) {
+                    throw new Error('Не удалось распознать структуру страницы');
+                }
+
+                document.getElementById('updateTime').textContent =
+                    `Обновлено в ${new Date().toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'})}`;
+
+                renderMovies();
+                grid.classList.remove('hidden');
+
+            } catch(e) {
+                console.error(e);
+                loading.classList.add('hidden');
+                document.getElementById('errorMsg').textContent = e.message;
+                errorState.classList.remove('hidden');
+                document.getElementById('updateTime').textContent = 'Ошибка загрузки';
+            } finally {
+                refreshIcon.style.animation = '';
+            }
+        }
+
+        function parseMovies(doc) {
+            const movies = [];
+
+            // Strategy 1: look for common cinema site patterns
+            // vpobede.ru uses various selectors, try multiple
+            const selectors = [
+                '.film-card', '.movie-card', '.afisha-item', '.afisha__item',
+                '.film-item', '.poster-item', '.schedule-item', '.movie',
+                '[class*="film"]', '[class*="movie"]', '[class*="afisha"]',
+                '.repertoire__item', '.catalog-item', '.card',
+                'article', '.item'
+            ];
+
+            for (const selector of selectors) {
+                const items = doc.querySelectorAll(selector);
+                if (items.length >= 2) {
+                    items.forEach(item => {
+                        const movie = extractMovieFromElement(item);
+                        if (movie && movie.title && movie.title.length > 1) {
+                            movies.push(movie);
+                        }
+                    });
+                    if (movies.length > 0) break;
+                }
+            }
+
+            // Deduplicate by title
+            const seen = new Set();
+            return movies.filter(m => {
+                const key = m.title.toLowerCase().trim();
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        }
+
+        function extractMovieFromElement(el) {
+            const movie = {};
+
+            // Title
+            const titleEl = el.querySelector('h1,h2,h3,h4,.title,[class*="title"],[class*="name"],a[href*="film"],a[href*="movie"]');
+            if (titleEl) {
+                movie.title = titleEl.textContent.trim();
+                if (titleEl.href) movie.link = resolveUrl(titleEl.href);
+            }
+            if (!movie.title) {
+                const link = el.querySelector('a');
+                if (link) {
+                    movie.title = link.textContent.trim();
+                    movie.link = resolveUrl(link.href);
+                }
+            }
+
+            // Poster
+            const img = el.querySelector('img');
+            if (img) {
+                movie.poster = resolveUrl(img.src || img.dataset.src || img.getAttribute('data-lazy-src') || '');
+            }
+
+            // Description
+            const descEl = el.querySelector('.description,[class*="desc"],[class*="synopsis"],p');
+            if (descEl) movie.description = descEl.textContent.trim();
+
+            // Genre
+            const genreEl = el.querySelector('.genre,[class*="genre"],[class*="tag"]');
+            if (genreEl) movie.genre = genreEl.textContent.trim();
+
+            // Age
+            const ageEl = el.querySelector('[class*="age"],[class*="rating"]');
+            if (ageEl) {
+                const ageText = ageEl.textContent.trim();
+                if (/\d+\+/.test(ageText)) movie.age = ageText.match(/\d+\+/)[0];
+            }
+
+            // Duration
+            const durEl = el.querySelector('[class*="dur"],[class*="time"],[class*="length"]');
+            if (durEl) {
+                const durText = durEl.textContent.trim();
+                if (/\d+\s*(мин|min)/i.test(durText)) movie.duration = durText;
+            }
+
+            // Sessions/times
+            const timeEls = el.querySelectorAll('[class*="time"] span, [class*="session"], [class*="seance"], time');
+            if (timeEls.length > 0) {
+                movie.sessions = Array.from(timeEls)
+                    .map(t => t.textContent.trim())
+                    .filter(t => /\d{1,2}:\d{2}/.test(t));
+            }
+
+            // Link - ensure full URL
+            if (!movie.link) {
+                const anyLink = el.querySelector('a[href]');
+                if (anyLink) movie.link = resolveUrl(anyLink.getAttribute('href'));
+            }
+
+            // Dates
+            const dateEls = el.querySelectorAll('[class*="date"]');
+            if (dateEls.length > 0) {
+                movie.dates = Array.from(dateEls).map(d => d.textContent.trim());
+            }
+
+            return movie;
+        }
+
+        function enrichMovie(movie, doc) {
+            // Try to get richer data from detail page
+            if (!movie.description) {
+                const descEl = doc.querySelector('.description, [class*="desc"], [class*="synopsis"], [class*="about"], .text, .film-info p, meta[name="description"]');
+                if (descEl) {
+                    movie.description = descEl.content || descEl.textContent.trim();
+                }
+            }
+            if (!movie.genre) {
+                const genreEl = doc.querySelector('[class*="genre"], [class*="tag"]');
+                if (genreEl) movie.genre = genreEl.textContent.trim();
+            }
+            if (!movie.duration) {
+                const text = doc.body.textContent;
+                const durMatch = text.match(/(\d{2,3})\s*(мин|минут)/i);
+                if (durMatch) movie.duration = durMatch[1] + ' мин';
+            }
+            if (!movie.age) {
+                const text = doc.body.textContent;
+                const ageMatch = text.match(/(\d{1,2})\+/);
+                if (ageMatch) movie.age = ageMatch[0];
+            }
+            if (!movie.poster) {
+                const ogImage = doc.querySelector('meta[property="og:image"]');
+                if (ogImage) movie.poster = resolveUrl(ogImage.content);
+            }
+            // Sessions from detail page
+            if (!movie.sessions || movie.sessions.length === 0) {
+                const times = doc.body.textContent.match(/\b([01]?\d|2[0-3]):[0-5]\d\b/g);
+                if (times && times.length > 0 && times.length < 30) {
+                    movie.sessions = [...new Set(times)];
+                }
+            }
+        }
+
+        function parseMoviesAlternative(doc) {
+            // Fallback: just look for all links that look like movie links
+            const movies = [];
+            const links = doc.querySelectorAll('a[href*="film"], a[href*="movie"], a[href*="afisha/"]');
+            const seen = new Set();
+
+            links.forEach(link => {
+                const title = link.textContent.trim();
+                const href = link.getAttribute('href');
+                if (title.length > 2 && title.length < 100 && !seen.has(title.toLowerCase())) {
+                    seen.add(title.toLowerCase());
+                    const img = link.querySelector('img') || link.parentElement?.querySelector('img');
+                    movies.push({
+                        title,
+                        link: resolveUrl(href),
+                        poster: img ? resolveUrl(img.src || img.dataset.src || '') : null,
+                        description: '',
+                        sessions: [],
+                        dates: dates.map(d => d.key)
+                    });
+                }
+            });
+
+            // If still nothing — look at og:title / page structure  
+            if (movies.length === 0) {
+                // Try getting all text blocks that could be movies
+                const headings = doc.querySelectorAll('h2, h3, h4');
+                headings.forEach(h => {
+                    const t = h.textContent.trim();
+                    if (t.length > 2 && t.length < 80) {
+                        const parent = h.closest('div, article, section, li');
+                        const link = (h.querySelector('a') || (parent && parent.querySelector('a')));
+                        if (!seen.has(t.toLowerCase())) {
+                            seen.add(t.toLowerCase());
+                            movies.push({
+                                title: t,
+                                link: link ? resolveUrl(link.getAttribute('href')) : null,
+                                poster: null,
+                                description: parent ? parent.textContent.replace(t, '').trim().slice(0, 300) : '',
+                                sessions: [],
+                                dates: dates.map(d => d.key)
+                            });
+                        }
+                    }
+                });
+            }
+
+            return movies;
+        }
+
+        function resolveUrl(url) {
+            if (!url) return '';
+            if (url.startsWith('http')) return url;
+            if (url.startsWith('//')) return 'https:' + url;
+            if (url.startsWith('/')) return 'https://vpobede.ru' + url;
+            return 'https://vpobede.ru/' + url;
+        }
+
+        // ---- Init ----
+        renderDateTabs();
+        fetchRepertoire();
+
+        // Add spin keyframe
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+        document.head.appendChild(styleSheet);
+    </script>
+</body>
+</html>
